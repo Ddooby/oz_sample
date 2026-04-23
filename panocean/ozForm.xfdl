@@ -1,0 +1,172 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<FDL version="2.1">
+  <Form id="ozForm" titletext="OZViewer" onload="ozForm_onload" onsize="ozForm_onsize" width="1250" height="900">
+    <Layouts>
+      <Layout mobileorientation="landscape" width="1250" height="900">
+        <WebBrowser id="WebBrowser00" taborder="0" onloadcompleted="WebBrowser00_onloadcompleted" height="850" left="0" top="0" right="0"/>
+      </Layout>
+    </Layouts>
+    <Script type="xscript5.1"><![CDATA[this.v_param = this.getOwnerFrame().param;
+this.v_oz_file = this.getOwnerFrame().oz_file;
+this.v_odi = this.getOwnerFrame().odi;
+this.v_oz_server = this.getOwnerFrame().oz_server;
+this.v_dbalias = this.getOwnerFrame().dbalias;
+this.v_ozdata = this.getOwnerFrame().ozdata;
+this.v_udsYn = this.getOwnerFrame().udsYn;
+this.v_viewZoom = this.getOwnerFrame().viewZoom;
+this.v_ozServerUrl = this.getOwnerFrame().ozServerUrl;
+this.v_pdf_nm = this.getOwnerFrame().pdf_nm;
+
+this.ozForm_onload = function(obj:nexacro.Form,e:nexacro.LoadEventInfo)
+{
+	if ("Y" === this.v_udsYn) {
+		this.fn_WebBrowserSendPost(this,
+			this.WebBrowser00,take.getSvcUrl()+
+			"/oz/ozUds.jsp",
+			"oz_file=" + encodeURIComponent(this.v_oz_file) +
+			"&odi=" + encodeURIComponent(this.v_odi) +
+			"&oz_server=" + encodeURIComponent(this.v_oz_server) +
+			"&dbalias=" + encodeURIComponent(this.v_dbalias) +
+			"&param=" + encodeURIComponent(this.v_param) +
+			"&ozdata=" + encodeURIComponent(this.v_ozdata) +
+			"&view_zoom=" + this.v_viewZoom +
+			"&ozServerUrl=" + this.v_ozServerUrl +
+			"&file_nm=" + this.v_pdf_nm);
+	} else {
+		this.fn_WebBrowserSendPost(this,
+			this.WebBrowser00,take.getSvcUrl()+
+			"/oz/oz.jsp",
+			"oz_file="+this.v_oz_file+
+			"&odi="+this.v_odi+
+			"&oz_server="+this.v_oz_server+
+			"&dbalias="+this.v_dbalias+
+			"&param="+this.v_param +
+			"&view_zoom=" + this.v_viewZoom +
+			"&ozServerUrl=" + this.v_ozServerUrl);
+	}
+    
+    var nWidth = this.v_width || 1250;
+	var nHeight = this.v_height || 900;
+	obj.set_width(nWidth);
+	obj.set_height(nHeight);
+	this.WebBrowser00.set_height(obj.height);
+    this.WebBrowser00.set_width(obj.width);
+
+    //this.WebBrowser00.set_height(obj.height);
+    //this.WebBrowser00.set_width(obj.width);
+};
+
+this.ozForm_onsize = function(obj:nexacro.Form,e:nexacro.SizeEventInfo)
+{
+   this.WebBrowser00.set_height(e.cy);
+   this.WebBrowser00.set_width(e.cx);
+};
+
+//post방식 전송을 위한 우회 코드 (tobesoft tip게시판 참조)
+this.fn_WebBrowserSendPost = function(objParent,objWb,sUrl,sParam)
+{
+	trace(nexacro.Browser);
+    console.log(sParam);
+
+	// html5
+	// add new webbrowser component to initialize web page.
+	var nL = objWb.left;
+	var nT = objWb.top;
+	var nW = objWb.width;
+	var nH = objWb.height;
+	var nR = objWb.right;
+	var nB = objWb.bottom;
+	var sName = objWb.name;
+	
+	objParent.removeChild(objWb.name);
+	objWb.destroy();
+	objWb = null;
+	
+	objWb = new WebBrowser();  
+	objWb.init(sName, "absolute", nL, nT, nW, nH, nR, nB);
+	objParent.addChild(sName, objWb); 
+	objWb.show(); 
+
+	var iframeObj = document.getElementById(objWb._ifrm_elem._object_id);
+	var iFrameDoc;
+	var iFrameBody;
+	if ( iframeObj.contentDocument ) 
+	{
+		iFrameDoc = iframeObj.contentDocument;
+		iFrameBody = iFrameDoc.getElementsByTagName('body')[0];
+	} else if ( iframeObj.contentWindow ) {
+		iFrameDoc = iframeObj.contentWindow.document;
+		iFrameBody = iFrameDoc.getElementsByTagName('body')[0];
+	}	
+	if(!iFrameBody)
+	{
+		iFrameBody = iFrameDoc.createElement("body");
+		iFrameDoc.appendChild(iFrameBody);   
+	}
+	
+	var form = iFrameDoc.createElement("form");
+	form.id = "postform";
+	form.name = "postform";
+	form.action = sUrl;
+	form.method = "post";
+	iFrameBody.appendChild(form);   
+	
+	var arr = sParam.split(/&/g);
+	var sHtml;
+	for(var i = 0; i < arr.length; i++)
+	{
+    
+    trace("=----------------");
+    //alert(arr);
+		var sValue = "";
+		var arrVal = "";
+		var arr2 = arr[i].split("=");
+//alert(arr2);
+		for(var j = 1; j < arr2.length; j++)
+		{
+			if(j == 1) 
+				arrVal += arr2[j];
+			else 
+				arrVal += "=" + arr2[j];			
+		}
+//alert(arrVal);
+		if(arrVal.length > 0)
+		{
+			sValue = arrVal;
+		} else {
+			sValue = arr2[1];
+		}
+		trace(sValue);
+	   if(arr2[0] && arr2[0].length > 0)
+	   {
+			var input = iFrameDoc.createElement("input");
+			input.id 	= arr2[0];
+			input.name 	= arr2[0];
+			input.type 	= "hidden";			
+			input.value	= sValue; 
+			form.appendChild(input);   
+	   }
+	}
+	
+	try {
+		var script = iFrameDoc.createElement('script');
+		script.type = 'text/javascript';
+		script.charset = 'utf-8';
+		script.defer = true;
+		script.async = true;
+		script.onload = function () {
+		}
+		var sDomain = "document.domain = \"" + document.domain + "\";";
+		script.text = [sDomain].join('');
+		iFrameBody.appendChild(script);	
+	} catch (e) {
+	}
+	
+	if(iFrameDoc.getElementById('postform'))
+	{
+		iFrameDoc.getElementById('postform').submit();
+	}
+
+}]]></Script>
+  </Form>
+</FDL>
